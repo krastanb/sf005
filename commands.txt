@@ -1,0 +1,64 @@
+# Создать двух пользователей (с помощью метода User.objects.create_user('username')).
+from django.contrib.auth.models import User
+u1 = User.objects.create_user('user1')
+u2 = User.objects.create_user('user2')
+
+# Создать два объекта модели Author, связанные с пользователями.
+from news.models import Author, Category, Post, PostCategory, Comment
+a1 = Author.objects.create(user=u1)
+a2 = Author.objects.create(user=u2)
+
+# Добавить 4 категории в модель Category.
+c1 = Category.objects.create(category_name='Политика')
+c2 = Category.objects.create(category_name='Экономика')
+c3 = Category.objects.create(category_name='Экология')
+c4 = Category.objects.create(category_name='Технологии')
+
+# Добавить 2 статьи и 1 новость.
+p1 = Post.objects.create(author=a1, choice='AR' , text='первая статья так то')
+p2 = Post.objects.create(author=a2, choice='AR' , text='вторая статья')
+p3 = Post.objects.create(author=a2, choice='NE' , text='единственная новость пока что')
+
+# Присвоить им категории (как минимум в одной статье/новости должно быть не меньше 2 категорий).
+PostCategory.objects.create(post=p1, category=c1)
+PostCategory.objects.create(post=p1, category=c2)
+PostCategory.objects.create(post=p2, category=c3)
+PostCategory.objects.create(post=p2, category=c4)
+PostCategory.objects.create(post=p3, category=c4)
+PostCategory.objects.create(post=p3, category=c1)
+
+# Создать как минимум 4 комментария к разным объектам модели Post (в каждом объекте должен быть как минимум один комментарий).
+com1 = Comment.objects.create(post=p1, user=u2, text='Причем тут политика вообще?')
+com2 = Comment.objects.create(post=p1, user=u2, text='Забаньте уже этого клоуна')
+com3 = Comment.objects.create(post=p3, user=u1, text='Кто тоже зашел сюда почитать в коменты?')
+com4 = Comment.objects.create(post=p2, user=u1, text='Скиньте рецепт пельменей')
+
+# Применяя функции like() и dislike() к статьям/новостям и комментариям, скорректировать рейтинги этих объектов.
+com1.like()
+com1.like()
+com2.like()
+com3.dislike()
+com3.dislike()
+p1.like()
+p1.like()
+p1.like()
+p2.dislike()
+p2.dislike()
+
+# Обновить рейтинги пользователей.
+a1.update_rating()
+a2.update_rating()
+
+# Вывести username и рейтинг лучшего пользователя (применяя сортировку и возвращая поля первого объекта).
+best_a = Author.objects.order_by('-rating').first()
+print(best_a.rating, best_a.user.username)
+
+
+# Вывести дату добавления, username автора, рейтинг, заголовок и превью лучшей статьи, основываясь на лайках/дислайках к этой статье.
+best_post = Post.objects.order_by('-rating').first()
+print(best_post.time_create.strftime("%d:%m:%Y %H:%M:%S"), best_post.author.user.username, best_post.author.rating, best_post.header, best_post.preview())
+
+# Вывести все комментарии (дата, пользователь, рейтинг, текст) к этой статье.
+coms = Comment.objects.filter(post=best_post)
+for com in coms:
+    print (com.time_create.strftime("%d:%m:%Y %H:%M:%S"), com.user.username, com.rating, com.text)
